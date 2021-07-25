@@ -1,7 +1,6 @@
 {
     "discord": {
-        "webhook_url": "",
-        "chat_channel": ""
+        "webhook_url": ""
     },
     "stormworks": {
         "listen_port": 9005
