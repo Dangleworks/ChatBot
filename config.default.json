@@ -1,10 +1,12 @@
 {
     "discord": {
         "webhook_url": "",
-        "chat_channel": "",
-        "webhook_avatar": "https://cdn.discordapp.com/embed/avatars/0.png"
+        "chat_channel": ""
     },
     "stormworks": {
         "listen_port": 9005
+    },
+    "steam": {
+        "api_key": ""
     }
 }

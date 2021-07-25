@@ -14,6 +14,7 @@
   "license": "SEE LICENSE IN LICENSE.md",
   "dependencies": {
     "discord.js": "^12.5.3",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "steam-web": "^0.7.0"
   }
 }
