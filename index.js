@@ -17,6 +17,7 @@ const hook = new Discord.WebhookClient(hook_creds[0], hook_creds[1]);
 function escapeMarkdown(text) {
     var unescaped = text.replace(/\\(\*|_|`|~|\\)/g, '$1'); // unescape any "backslashed" character
     var escaped = unescaped.replace(/(\*|_|`|~|\\)/g, '\\$1'); // escape *, _, `, ~, \
+    var escaped = escaped.replace(/\[.+\]\(.+\)/g, '\\$&')
     return escaped;
 }
 
@@ -38,4 +39,4 @@ app.get('/sendmsg', (req, res) => {
 
 app.listen(config.stormworks.listen_port, "127.0.0.1", () => {
     console.log('server started');
-  });
+});
