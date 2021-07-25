@@ -39,6 +39,7 @@ app.get('/sendmsg', (req, res) => {
                 res.end();
             }
             hook.send(escapeMarkdown(req.query.msg), {
+                disableMentions: "all",
                 username: escapeMarkdown(data.response.players[0].personaname),
                 avatarURL: data.response.players[0].avatarfull
             }).then(() => {
@@ -49,6 +50,24 @@ app.get('/sendmsg', (req, res) => {
                 res.end();
             })
         }
+    })
+});
+
+app.get('/srvmsg', (req, res) => {
+    res.set("Connection", "close")
+    if (!req.query.msg || !req.query.name || !req.query.avatarURL) {
+        res.sendStatus(400)
+        res.end();
+    }
+    hook.send(req.query.msg, {
+        username: req.query.name,
+        avatarURL: req.query.avatarURL
+    }).then(() => {
+        res.sendStatus(200);
+        res.end();
+    }).catch((err) => {
+        res.sendStatus(500);
+        res.end();
     })
 });
 
