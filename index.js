@@ -36,28 +36,32 @@ bot.on('ready', () => {
 // Define global variables
 var messages = [];
 var webhook_channelID;
+var steam_cache = {};
 
-app.get('/sendmsg', (req, res) => {
+app.get('/sendmsg', async (req, res) => {
     if (!req.query.msg || !req.query.sid) {
         return res.sendStatus(400).end();
     }
-    sapi.getPlayerSummaries({
-        steamids: [req.query.sid],
-        callback: (err, data) => {
-            if (err) {
-                res.sendStatus(500).end();
-                res.end();
+    if(!steam_cache[req.query.sid]) {
+        await sapi.getPlayerSummaries({
+            steamids: [req.query.sid],
+            callback: (err, data) => {
+                if (err) {
+                    res.sendStatus(500).end();
+                    res.end();
+                }
+                steam_cache[req.query.sid] = data.response.players[0].avatarfull
             }
-            hook.send(escapeMarkdown(req.query.msg), {
-                disableMentions: "all",
-                username: escapeMarkdown(data.response.players[0].personaname),
-                avatarURL: data.response.players[0].avatarfull
-            }).then(() => {
-                return res.sendStatus(200).end();
-            }).catch((err) => {
-                return res.sendStatus(500).end();
-            })
-        }
+        })
+    }
+    hook.send(escapeMarkdown(req.query.msg), {
+        disableMentions: "all",
+        username: escapeMarkdown(data.response.players[0].personaname),
+        avatarURL: steam_cache[req.query.sid]
+    }).then(() => {
+        return res.sendStatus(200).end();
+    }).catch((err) => {
+        return res.sendStatus(500).end();
     })
 });
 
@@ -77,7 +81,6 @@ app.get('/srvmsg', (req, res) => {
 
 app.get("/getmsgs", (req, res) => {
     if(messages.length == 0) {
-        res.statusMessage = "";
         return res.sendStatus(200).end();
     }
     res.send(messages.shift());
