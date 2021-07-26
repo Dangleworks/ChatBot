@@ -97,7 +97,7 @@ bot.on('message', async (msg) => {
     if(msg.author.bot) return;
     if(msg.content === "") return;
     cleanmsg = msg.content.replaceAll(/([^\x00-\x7F]|;|<|>|{|})/g, "");
-    cleanmsg = cleanmsg.replaceAll(/\x0A/, " ");
+    cleanmsg = cleanmsg.replaceAll(/\x0A/g, " ");
     if(cleanmsg === "") return;
     cleantag = msg.author.tag.replace(/([^\x00-\x7F]|;|<|>|{|}|\n)/g, "");
     endmsg   = cleantag + "\r" + cleanmsg
