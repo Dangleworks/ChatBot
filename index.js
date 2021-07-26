@@ -38,16 +38,14 @@ var messages = [];
 var webhook_channelID;
 
 app.get('/sendmsg', (req, res) => {
-    res.set("Connection", "close")
     if (!req.query.msg || !req.query.sid) {
-        res.sendStatus(400)
-        res.end();
+        return res.sendStatus(400).end();
     }
     sapi.getPlayerSummaries({
         steamids: [req.query.sid],
         callback: (err, data) => {
             if (err) {
-                res.sendStatus(500);
+                res.sendStatus(500).end();
                 res.end();
             }
             hook.send(escapeMarkdown(req.query.msg), {
@@ -55,39 +53,32 @@ app.get('/sendmsg', (req, res) => {
                 username: escapeMarkdown(data.response.players[0].personaname),
                 avatarURL: data.response.players[0].avatarfull
             }).then(() => {
-                res.sendStatus(200);
-                res.end();
+                return res.sendStatus(200).end();
             }).catch((err) => {
-                res.sendStatus(500);
-                res.end();
+                return res.sendStatus(500).end();
             })
         }
     })
 });
 
 app.get('/srvmsg', (req, res) => {
-    res.set("Connection", "close");
     if (!req.query.msg || !req.query.name || !req.query.avatarURL) {
-        res.sendStatus(400)
-        res.end();
+        return res.sendStatus(400).end()
     }
     hook.send(req.query.msg, {
         username: req.query.name,
         avatarURL: req.query.avatarURL
     }).then(() => {
-        res.sendStatus(200);
-        res.end();
+        return res.sendStatus(200).end();
     }).catch((err) => {
-        res.sendStatus(500);
-        res.end();
+        return res.sendStatus(500).end();
     })
 });
 
 app.get("/getmsgs", (req, res) => {
-    res.set("Connection", "close");
     if(messages.length == 0) {
-        res.send("");
-        res.sendStatus(200);
+        res.statusMessage = "";
+        return res.sendStatus(200).end();
     }
     res.send(messages.shift());
 })
