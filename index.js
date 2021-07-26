@@ -94,6 +94,7 @@ app.get("/getmsgs", (req, res) => {
 
 bot.on('message', async (msg) => {
     if(msg.channel.id !== webhook_channelID) return;
+    if(msg.author.bot) return;
     if(msg.content === "") return;
     cleanmsg = msg.content.replace(/([^\x00-\x7F]|;|<|>|{|})/g, "");
     cleanmsg = cleanmsg.replace(/\x0A/, " ");
