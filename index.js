@@ -86,6 +86,7 @@ app.get('/srvmsg', (req, res) => {
 app.get("/getmsgs", (req, res) => {
     res.set("Connection", "close");
     if(messages.length == 0) {
+        res.send("");
         res.end();
     }
     res.send(messages.shift());
