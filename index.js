@@ -13,6 +13,7 @@ const config = require("./config.json")
 const app = express();
 hook_creds = config.discord.webhook_url.split("/webhooks/")[1].split("/")
 const hook = new Discord.WebhookClient(hook_creds[0], hook_creds[1]);
+const bot = new Discord.Client();
 const sapi = new steam({
     apiKey: config.steam.api_key,
     format: 'json'
@@ -24,6 +25,17 @@ function escapeMarkdown(text) {
     var escaped = escaped.replace(/\[.+\]\(.+\)/g, '\\$&')
     return escaped;
 }
+
+bot.on('ready', () => {
+    console.log(`Logged into Discord as ${bot.user.tag}`);
+    bot.fetchWebhook(hook.id).then((webhook) => {
+        webhook_channelID = webhook.channelID;
+    });
+})
+
+// Define global variables
+var messages = [];
+var webhook_channelID;
 
 app.get('/sendmsg', (req, res) => {
     res.set("Connection", "close")
@@ -54,7 +66,7 @@ app.get('/sendmsg', (req, res) => {
 });
 
 app.get('/srvmsg', (req, res) => {
-    res.set("Connection", "close")
+    res.set("Connection", "close");
     if (!req.query.msg || !req.query.name || !req.query.avatarURL) {
         res.sendStatus(400)
         res.end();
@@ -71,6 +83,28 @@ app.get('/srvmsg', (req, res) => {
     })
 });
 
+app.get("/getmsgs", (req, res) => {
+    res.set("Connection", "close");
+    if(messages.length == 0) {
+        res.end();
+    }
+    res.send(messages.shift());
+})
+
+bot.on('message', async (msg) => {
+    if(msg.channel.id !== webhook_channelID) return;
+    if(msg.content === "") return;
+    cleanmsg = msg.content.replace(/([^\x00-\x7F]|;|<|>|{|})/g, "");
+    cleanmsg = cleanmsg.replace(/\x0A/, " ");
+    if(cleanmsg === "") return;
+    cleantag = msg.author.tag.replace(/([^\x00-\x7F]|;|<|>|{|}|\n)/g, "");
+    endmsg   = cleantag + "\r" + cleanmsg
+    messages.push(endmsg);
+});
+
 app.listen(config.stormworks.listen_port, "127.0.0.1", () => {
     console.log('server started');
+    if(config.discord.token_optional) {
+        bot.login(config.discord.token_optional);
+    }
 });

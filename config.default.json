@@ -1,6 +1,7 @@
 {
     "discord": {
-        "webhook_url": ""
+        "webhook_url": "",
+        "token_optional": ""
     },
     "stormworks": {
         "listen_port": 9005
