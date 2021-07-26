@@ -87,7 +87,7 @@ app.get("/getmsgs", (req, res) => {
     res.set("Connection", "close");
     if(messages.length == 0) {
         res.send("");
-        res.end();
+        return res.end();
     }
     res.send(messages.shift());
 })
