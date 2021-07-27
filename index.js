@@ -50,19 +50,29 @@ app.get('/sendmsg', async (req, res) => {
                     res.sendStatus(500).end();
                     res.end();
                 }
-                steam_cache[req.query.sid] = data.response.players[0].avatarfull
+                steam_cache[req.query.sid] = {"avatar": data.response.players[0].avatarfull, "name": data.response.players[0].personaname}
+                hook.send(escapeMarkdown(req.query.msg), {
+                    disableMentions: "all",
+                    username: escapeMarkdown(steam_cache[req.query.sid].name || "Unknown"),
+                    avatarURL: (steam_cache[req.query.sid].avatar || "https://cdn.discordapp.com/embed/avatars/0.png")
+                }).then(() => {
+                    return res.sendStatus(200).end();
+                }).catch((err) => {
+                    return res.sendStatus(500).end();
+                })
             }
         })
+    } else {
+        hook.send(escapeMarkdown(req.query.msg), {
+            disableMentions: "all",
+            username: escapeMarkdown(steam_cache[req.query.sid].name || "Unknown"),
+            avatarURL: (steam_cache[req.query.sid].avatar || "https://cdn.discordapp.com/embed/avatars/0.png")
+        }).then(() => {
+            return res.sendStatus(200).end();
+        }).catch((err) => {
+            return res.sendStatus(500).end();
+        })
     }
-    hook.send(escapeMarkdown(req.query.msg), {
-        disableMentions: "all",
-        username: escapeMarkdown(data.response.players[0].personaname),
-        avatarURL: steam_cache[req.query.sid]
-    }).then(() => {
-        return res.sendStatus(200).end();
-    }).catch((err) => {
-        return res.sendStatus(500).end();
-    })
 });
 
 app.get('/srvmsg', (req, res) => {
