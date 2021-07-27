@@ -13,6 +13,7 @@ const config = require("./config.json")
 const app = express();
 hook_creds = config.discord.webhook_url.split("/webhooks/")[1].split("/")
 const hook = new Discord.WebhookClient(hook_creds[0], hook_creds[1]);
+const bot = new Discord.Client();
 const sapi = new steam({
     apiKey: config.steam.api_key,
     format: 'json'
@@ -25,52 +26,91 @@ function escapeMarkdown(text) {
     return escaped;
 }
 
-app.get('/sendmsg', (req, res) => {
-    res.set("Connection", "close")
+bot.on('ready', () => {
+    console.log(`Logged into Discord as ${bot.user.tag}`);
+    bot.fetchWebhook(hook.id).then((webhook) => {
+        webhook_channelID = webhook.channelID;
+    });
+})
+
+// Define global variables
+var messages = [];
+var webhook_channelID;
+var steam_cache = {};
+
+app.get('/sendmsg', async (req, res) => {
     if (!req.query.msg || !req.query.sid) {
-        res.sendStatus(400)
-        res.end();
+        return res.sendStatus(400).end();
     }
-    sapi.getPlayerSummaries({
-        steamids: [req.query.sid],
-        callback: (err, data) => {
-            if (err) {
-                res.sendStatus(500);
-                res.end();
+    if(!steam_cache[req.query.sid]) {
+        await sapi.getPlayerSummaries({
+            steamids: [req.query.sid],
+            callback: (err, data) => {
+                if (err) {
+                    res.sendStatus(500).end();
+                    res.end();
+                }
+                steam_cache[req.query.sid] = {"avatar": data.response.players[0].avatarfull, "name": data.response.players[0].personaname}
+                hook.send(escapeMarkdown(req.query.msg), {
+                    disableMentions: "all",
+                    username: escapeMarkdown(steam_cache[req.query.sid].name || "Unknown"),
+                    avatarURL: (steam_cache[req.query.sid].avatar || "https://cdn.discordapp.com/embed/avatars/0.png")
+                }).then(() => {
+                    return res.sendStatus(200).end();
+                }).catch((err) => {
+                    return res.sendStatus(500).end();
+                })
             }
-            hook.send(escapeMarkdown(req.query.msg), {
-                disableMentions: "all",
-                username: escapeMarkdown(data.response.players[0].personaname),
-                avatarURL: data.response.players[0].avatarfull
-            }).then(() => {
-                res.sendStatus(200);
-                res.end();
-            }).catch((err) => {
-                res.sendStatus(500);
-                res.end();
-            })
-        }
-    })
+        })
+    } else {
+        hook.send(escapeMarkdown(req.query.msg), {
+            disableMentions: "all",
+            username: escapeMarkdown(steam_cache[req.query.sid].name || "Unknown"),
+            avatarURL: (steam_cache[req.query.sid].avatar || "https://cdn.discordapp.com/embed/avatars/0.png")
+        }).then(() => {
+            return res.sendStatus(200).end();
+        }).catch((err) => {
+            return res.sendStatus(500).end();
+        })
+    }
 });
 
 app.get('/srvmsg', (req, res) => {
-    res.set("Connection", "close")
     if (!req.query.msg || !req.query.name || !req.query.avatarURL) {
-        res.sendStatus(400)
-        res.end();
+        return res.sendStatus(400).end()
     }
     hook.send(req.query.msg, {
         username: req.query.name,
         avatarURL: req.query.avatarURL
     }).then(() => {
-        res.sendStatus(200);
-        res.end();
+        return res.sendStatus(200).end();
     }).catch((err) => {
-        res.sendStatus(500);
-        res.end();
+        return res.sendStatus(500).end();
     })
+});
+
+app.get("/getmsgs", (req, res) => {
+    if(messages.length == 0) {
+        return res.sendStatus(200).end();
+    }
+    res.send(messages.shift());
+})
+
+bot.on('message', async (msg) => {
+    if(msg.channel.id !== webhook_channelID) return;
+    if(msg.author.bot) return;
+    if(msg.content === "") return;
+    cleanmsg = msg.content.replaceAll(/([^\x00-\x7F]|;|<|>|{|})/g, "");
+    cleanmsg = cleanmsg.replaceAll(/\x0A/g, " ");
+    if(cleanmsg === "") return;
+    cleantag = msg.author.tag.replace(/([^\x00-\x7F]|;|<|>|{|}|\n)/g, "");
+    endmsg   = cleantag + "\r" + cleanmsg
+    messages.push(endmsg);
 });
 
 app.listen(config.stormworks.listen_port, "127.0.0.1", () => {
     console.log('server started');
+    if(config.discord.token_optional) {
+        bot.login(config.discord.token_optional);
+    }
 });
