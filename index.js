@@ -42,7 +42,7 @@ app.get('/sendmsg', async (req, res) => {
     if (!req.query.msg || !req.query.sid) {
         return res.sendStatus(400).end();
     }
-    if(!steam_cache[req.query.sid]) {
+    if (!steam_cache[req.query.sid]) {
         await sapi.getPlayerSummaries({
             steamids: [req.query.sid],
             callback: (err, data) => {
@@ -50,7 +50,10 @@ app.get('/sendmsg', async (req, res) => {
                     res.sendStatus(500).end();
                     res.end();
                 }
-                steam_cache[req.query.sid] = {"avatar": data.response.players[0].avatarfull, "name": data.response.players[0].personaname}
+                steam_cache[req.query.sid] = {
+                    "avatar": data.response.players[0].avatarfull,
+                    "name": data.response.players[0].personaname
+                }
                 hook.send(escapeMarkdown(req.query.msg), {
                     disableMentions: "all",
                     username: escapeMarkdown(steam_cache[req.query.sid].name || "Unknown"),
@@ -90,27 +93,99 @@ app.get('/srvmsg', (req, res) => {
 });
 
 app.get("/getmsgs", (req, res) => {
-    if(messages.length == 0) {
+    if (messages.length == 0) {
         return res.sendStatus(200).end();
     }
     res.send(messages.shift());
 })
 
+app.get("/join", (req, res) => {
+    if (!req.query.sid) {
+        return res.sendStatus(400).end();
+    }
+    sapi.getPlayerSummaries({
+        steamids: [req.query.sid],
+        callback: (err, data) => {
+            if (err) {
+                res.sendStatus(500).end();
+                res.end();
+            }
+            hook.send({
+                disableMentions: "all",
+                "username": "Server",
+                "content": null,
+                "embeds": [{
+                    "description": "Joined the server!",
+                    "color": 65280,
+                    "author": {
+                        "url": `http://steamcommunity.com/profiles/${req.query.sid}`,
+                        "name": data.response.players[0].personaname,
+                        "icon_url": data.response.players[0].avatarfull
+                    },
+                    "footer": {
+                        "text": `steam64: ${req.query.sid}`
+                    }
+                }]
+            }).then(() => {
+                return res.sendStatus(200).end();
+            }).catch((err) => {
+                return res.sendStatus(500).end();
+            })
+        }
+    })
+})
+
+app.get("/leave", (req, res) => {
+    if (!req.query.sid) {
+        return res.sendStatus(400).end();
+    }
+    sapi.getPlayerSummaries({
+        steamids: [req.query.sid],
+        callback: (err, data) => {
+            if (err) {
+                res.sendStatus(500).end();
+                res.end();
+            }
+            hook.send({
+                disableMentions: "all",
+                "username": "Server",
+                "content": null,
+                "embeds": [{
+                    "description": "Left the server!",
+                    "color": 16711680,
+                    "author": {
+                        "url": `http://steamcommunity.com/profiles/${req.query.sid}`,
+                        "name": data.response.players[0].personaname,
+                        "icon_url": data.response.players[0].avatarfull
+                    },
+                    "footer": {
+                        "text": `steam64: ${req.query.sid}`
+                    }
+                }]
+            }).then(() => {
+                return res.sendStatus(200).end();
+            }).catch((err) => {
+                return res.sendStatus(500).end();
+            })
+        }
+    })
+})
+
 bot.on('message', async (msg) => {
-    if(msg.channel.id !== webhook_channelID) return;
-    if(msg.author.bot) return;
-    if(msg.content === "") return;
+    if (msg.channel.id !== webhook_channelID) return;
+    if (msg.author.bot) return;
+    if (msg.content === "") return;
     cleanmsg = msg.content.replaceAll(/([^\x00-\x7F]|;|<|>|{|})/g, "");
     cleanmsg = cleanmsg.replaceAll(/\x0A/g, " ");
-    if(cleanmsg === "") return;
+    if (cleanmsg === "") return;
     cleantag = msg.author.tag.replace(/([^\x00-\x7F]|;|<|>|{|}|\n)/g, "");
-    endmsg   = cleantag + "\r" + cleanmsg
+    endmsg = cleantag + "\r" + cleanmsg
     messages.push(endmsg);
 });
 
 app.listen(config.stormworks.listen_port, "127.0.0.1", () => {
     console.log('server started');
-    if(config.discord.token_optional) {
+    if (config.discord.token_optional) {
         bot.login(config.discord.token_optional);
     }
 });
