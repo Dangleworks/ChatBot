@@ -171,6 +171,23 @@ app.get("/leave", (req, res) => {
     })
 })
 
+var playercount = -1;
+app.get("/setplayers", (req, res) => {
+    if (!req.query.p) {
+        return res.sendStatus(400).end();
+    }
+    if(playercount !== req.query.p) {
+        playercount = req.query.p;
+        bot.user.setPresence({activity: {type: "PLAYING", name: `with ${req.query.p} players`}}).catch(err => {
+            return res.sendStatus(500).end();
+        }).then(() => {
+            return res.sendStatus(200).end();
+        })
+    } else {
+        return res.sendStatus(418)
+    }
+})
+
 bot.on('message', async (msg) => {
     if (msg.channel.id !== webhook_channelID) return;
     if (msg.author.bot) return;
