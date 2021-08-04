@@ -9,7 +9,7 @@ if (!fs.existsSync("./config.json")) {
 var steam = require('steam-web');
 const express = require('express');
 const Discord = require("discord.js");
-const config = require("./config.json")
+const config = require("./config.json");
 const app = express();
 hook_creds = config.discord.webhook_url.split("/webhooks/")[1].split("/")
 const hook = new Discord.WebhookClient(hook_creds[0], hook_creds[1]);
@@ -28,6 +28,7 @@ function escapeMarkdown(text) {
 
 bot.on('ready', () => {
     console.log(`Logged into Discord as ${bot.user.tag}`);
+    bot.user.setPresence({activity: {type: "WATCHING", name: `the server burn | Offline`}})
     bot.fetchWebhook(hook.id).then((webhook) => {
         webhook_channelID = webhook.channelID;
     });
@@ -170,9 +171,14 @@ app.get("/leave", (req, res) => {
         }
     })
 })
-
+var onlinecheck = null
 var playercount = -1;
 app.get("/setplayers", (req, res) => {
+    clearInterval(onlinecheck);
+    onlinecheck = setTimeout(() => {
+        bot.user.setPresence({activity: {type: "WATCHING", name: `the server burn | Offline`}})
+        playercount = -1
+    }, 5000);
     if (!req.query.p) {
         return res.sendStatus(400).end();
     }
