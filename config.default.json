@@ -4,7 +4,8 @@
         "token_optional": ""
     },
     "stormworks": {
-        "listen_port": 9005
+        "listen_port": 9005,
+		"hostname": "127.0.0.1"
     },
     "steam": {
         "api_key": ""

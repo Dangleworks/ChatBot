@@ -212,12 +212,12 @@ bot.on('message', async (msg) => {
 
 if (config.discord.token_optional) {
     bot.login(config.discord.token_optional).then(() => {
-        app.listen(config.stormworks.listen_port, "127.0.0.1", () => {
+        app.listen(config.stormworks.listen_port, config.stormworks.hostname, () => {
             console.log('server started');
         });
     });
 } else {
-    app.listen(config.stormworks.listen_port, "127.0.0.1", () => {
+    app.listen(config.stormworks.listen_port, config.stormworks.hostname, () => {
         console.log('server started');
     });
 }
