@@ -97,7 +97,7 @@ app.get("/getmsgs", (req, res) => {
     if (messages.length == 0) {
         return res.sendStatus(200).end();
     }
-    res.send(messages.shift());
+    res.send(messages.shift()).end();
 })
 
 app.get("/join", (req, res) => {
@@ -192,6 +192,10 @@ app.get("/setplayers", (req, res) => {
     } else {
         return res.sendStatus(418)
     }
+})
+
+app.get("/playercount", (req, res) => {
+	return res.send({status:true, player_count: playercount}).end();
 })
 
 bot.on('message', async (msg) => {
